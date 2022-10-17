@@ -2,7 +2,7 @@
 
 @interface RCT_EXTERN_MODULE(Hiragana, NSObject)
 
-RCT_EXTERN_METHOD(multiply:(float)a withB:(float)b
+RCT_EXTERN_METHOD(convert:(NSString*)str
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 

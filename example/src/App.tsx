@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-hiragana';
+import { convert } from 'react-native-hiragana';
 
 export default function App() {
   const [result, setResult] = React.useState<number | undefined>();
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    convert("私の部屋は、きれいで、静かで、とても好き").then(setResult);
   }, []);
 
   return (

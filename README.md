@@ -1,5 +1,7 @@
 # react-native-hiragana
+
 A React Native module for converting Japanese sentence to hiragana
+
 ## Installation
 
 ```sh
@@ -9,12 +11,16 @@ npm install react-native-hiragana
 ## Usage
 
 ```js
-import { multiply } from "react-native-hiragana";
+import { convert } from 'react-native-hiragana';
 
 // ...
 
-const result = await multiply(3, 7);
+const result = await convert('私の部屋は、きれいで、静かで、とても好き');
 ```
+
+## TODO
+
+Android implementation
 
 ## Contributing
 
