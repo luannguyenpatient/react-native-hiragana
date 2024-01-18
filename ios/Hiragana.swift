@@ -1,30 +1,54 @@
+import Foundation
+
 @objc(Hiragana)
 class Hiragana: NSObject {
 
   @objc(convert:withResolver:withRejecter:)
   func convert(str: String, resolve:RCTPromiseResolveBlock, reject:RCTPromiseRejectBlock) -> Void {
-      let inputText = str as NSString
-      let outputText = NSMutableString()
-
-      var range: CFRange = CFRangeMake(0, inputText.length)
-      let locale: CFLocale = CFLocaleCopyCurrent()
-
-      let tokenizer: CFStringTokenizer = CFStringTokenizerCreate(kCFAllocatorDefault, inputText as CFString, range, kCFStringTokenizerUnitWordBoundary, locale)
-      var tokenType: CFStringTokenizerTokenType = CFStringTokenizerGoToTokenAtIndex(tokenizer, 0)
-
-      while tokenType != CFStringTokenizerTokenType(rawValue: 0) {
-          range = CFStringTokenizerGetCurrentTokenRange(tokenizer)
-
-          let latin: CFTypeRef = CFStringTokenizerCopyCurrentTokenAttribute(tokenizer, kCFStringTokenizerAttributeLatinTranscription)
-          let romaji = latin as! NSString
-
-          let furigana: NSMutableString = romaji.mutableCopy() as! NSMutableString
-          CFStringTransform(furigana as CFMutableString, nil, kCFStringTransformLatinHiragana, false)
-
-          outputText.append(furigana as String)
-          tokenType = CFStringTokenizerAdvanceToNextToken(tokenizer)
-      }
-
-      resolve(outputText)
+      resolve(str.hiragana)
     }
-  }
+}
+
+private extension CFStringTokenizer {
+    var hiragana: String { string(to: kCFStringTransformLatinHiragana) }
+    var katakana: String { string(to: kCFStringTransformLatinKatakana) }
+
+    private func string(to transform: CFString) -> String {
+        var output: String = ""
+        while !CFStringTokenizerAdvanceToNextToken(self).isEmpty {
+            output.append(letter(to: transform))
+        }
+        return output
+    }
+
+    private func letter(to transform: CFString) -> String {
+        let mutableString: NSMutableString =
+            CFStringTokenizerCopyCurrentTokenAttribute(self, kCFStringTokenizerAttributeLatinTranscription)
+                .flatMap { $0 as? NSString }
+                .map { $0.mutableCopy() }
+                .flatMap { $0 as? NSMutableString } ?? NSMutableString()
+        CFStringTransform(mutableString, nil, transform, false)
+        return mutableString as String
+    }
+}
+
+enum Kana { case hiragana, katakana }
+
+func convert(_ input: String, to kana: Kana) -> String {
+    let trimmed: String = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    let tokenizer: CFStringTokenizer =
+        CFStringTokenizerCreate(kCFAllocatorDefault,
+                                trimmed as CFString,
+                                CFRangeMake(0, trimmed.utf16.count),
+                                kCFStringTokenizerUnitWordBoundary,
+                                Locale(identifier: "ja") as CFLocale)
+    switch kana {
+    case .hiragana: return tokenizer.hiragana
+    case .katakana: return tokenizer.katakana
+    }
+}
+
+extension String {
+    var hiragana: String { convert(self, to: .hiragana) }
+    var katakana: String { convert(self, to: .katakana) }
+}

@@ -17,6 +17,6 @@ const Hiragana = NativeModules.Hiragana
       }
     );
 
-export function convert(str: string): Promise<number> {
+export function convert(str: string): Promise<string> {
   return Hiragana.convert(str);
 }
