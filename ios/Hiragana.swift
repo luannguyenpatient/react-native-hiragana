@@ -28,7 +28,8 @@ private extension CFStringTokenizer {
                 .map { $0.mutableCopy() }
                 .flatMap { $0 as? NSMutableString } ?? NSMutableString()
         CFStringTransform(mutableString, nil, transform, false)
-        return mutableString as String
+        let string = mutableString as String
+        return string.count == 0 ? " " : string
     }
 }
 
