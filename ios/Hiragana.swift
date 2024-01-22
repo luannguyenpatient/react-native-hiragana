@@ -37,19 +37,61 @@ enum Kana { case hiragana, katakana }
 
 func convert(_ input: String, to kana: Kana) -> String {
     let trimmed: String = input.trimmingCharacters(in: .whitespacesAndNewlines)
-    let tokenizer: CFStringTokenizer =
-        CFStringTokenizerCreate(kCFAllocatorDefault,
-                                trimmed as CFString,
-                                CFRangeMake(0, trimmed.utf16.count),
-                                kCFStringTokenizerUnitWordBoundary,
-                                Locale(identifier: "ja") as CFLocale)
-    switch kana {
-    case .hiragana: return tokenizer.hiragana
-    case .katakana: return tokenizer.katakana
+    var array: [String] = []
+    var strChar = ""
+    trimmed.forEach { item in
+        if strChar.count > 0 {
+            if ("\(item)".isValidKanji() && strChar.isValidKanji()) || (!"\(item)".isValidKanji() && !strChar.isValidKanji()) {
+                strChar.append(item)
+            } else  {
+                array.append(strChar)
+                strChar = "\(item)"
+            }
+        } else {
+            strChar.append(item)
+        }
     }
+    if strChar.count > 0 {
+        array.append(strChar)
+    }
+    
+    // convert only string kanji
+    var result = ""
+    array.forEach { str in
+        if str.isValidKanji() {
+            let tokenizer: CFStringTokenizer =
+                CFStringTokenizerCreate(kCFAllocatorDefault,
+                                        str as CFString,
+                                        CFRangeMake(0, str.utf16.count),
+                                        kCFStringTokenizerUnitWordBoundary,
+                                        Locale(identifier: "ja") as CFLocale)
+            switch kana {
+            case .hiragana: result.append(tokenizer.hiragana)
+            case .katakana: result.append(tokenizer.katakana)
+            }
+        } else {
+            result.append(str)
+        }
+    }
+    return result
 }
 
 extension String {
     var hiragana: String { convert(self, to: .hiragana) }
     var katakana: String { convert(self, to: .katakana) }
+    
+    func isValidKanji() -> Bool {
+        let regex = #"^[一-龠]*$"#
+        guard let gRegex = try? NSRegularExpression(pattern: regex) else {
+            return false
+        }
+        
+        let range = NSRange(location: 0, length: self.utf16.count)
+        
+        if gRegex.firstMatch(in: self, options: [], range: range) != nil {
+            return true
+        }
+        
+        return false
+    }
 }
