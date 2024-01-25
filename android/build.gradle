@@ -133,6 +133,7 @@ dependencies {
     //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "com.atilika.kuromoji:kuromoji-ipadic:0.9.0"
 // From node_modules
 }
 
