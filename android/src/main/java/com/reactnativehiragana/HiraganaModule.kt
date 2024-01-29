@@ -6,8 +6,12 @@ import com.facebook.react.bridge.Promise
 import com.atilika.kuromoji.ipadic.Token
 import com.atilika.kuromoji.ipadic.Tokenizer
 import com.mariten.kanatools.KanaConverter
+import kotlinx.coroutines.*
 
 class HiraganaModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val coroutineScope = CoroutineScope(Dispatchers.IO.limitedParallelism(5))
 
     override fun getName(): String {
         return "Hiragana"
@@ -17,21 +21,33 @@ class HiraganaModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     // See https://reactnative.dev/docs/native-modules-android
     @ReactMethod
     fun convert(str: String, promise: Promise) {
-      promise.resolve(tranlateHiragana(str))
+      coroutineScope.launch {
+        withContext(coroutineScope.coroutineContext) {
+          promise.resolve(tranlateHiragana(str))
+        }
+      }
     }
 
-    internal class Katakana(var katakana: String, var originally: Boolean)
-
-    fun isKanji(str: String): Boolean {
+    private fun isKanji(str: String): Boolean {
       val pattern = "^[一-龠]*$".toRegex()
       return pattern.matches(str)
     }
 
-    fun tranlateHiragana(str: String?): String {
+    private fun containKanji(str: String): Boolean {
+      str.forEach { char ->
+        if (isKanji(char.toString())) {
+          return true
+        }
+      }
+      return false
+    }
+
+    private fun tranlateHiragana(str: String): String {
       var z: Boolean
       val tokenizer = Tokenizer()
       val list: List<Token> = tokenizer.tokenize(str)
-      val arrayList: ArrayList<Katakana> = ArrayList<Katakana>()
+      var result = ""
+
       for (next in list) {
         var surface = next.surface
         val reading = next.reading
@@ -39,17 +55,13 @@ class HiraganaModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
           z = true
         } else {
           if (reading != "*") {
-            if (isKanji(surface)) {
+            if (isKanji(surface) || containKanji(surface)) {
               surface = KanaConverter.convertKana(reading, KanaConverter.OP_ZEN_KATA_TO_ZEN_HIRA)
             }
           }
           z = false
         }
-        arrayList.add(Katakana(surface, z))
-      }
-      var result = ""
-      for (katakana in arrayList) {
-        result += katakana.katakana
+        result += surface
       }
       return result
     }
