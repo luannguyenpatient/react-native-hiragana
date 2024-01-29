@@ -41,7 +41,8 @@ func convert(_ input: String, to kana: Kana) -> String {
     var strChar = ""
     trimmed.forEach { item in
         if strChar.count > 0 {
-            if ("\(item)".isValidKanji() && strChar.isValidKanji()) || (!"\(item)".isValidKanji() && !strChar.isValidKanji()) {
+            let trimStr = "\(item)".trimmingCharacters(in: .whitespacesAndNewlines)
+            if ("\(trimStr)".isValidKanji() && strChar.isValidKanji()) || (!"\(trimStr)".isValidKanji() && !strChar.isValidKanji()) || trimStr.count == 0 {
                 strChar.append(item)
             } else  {
                 array.append(strChar)
